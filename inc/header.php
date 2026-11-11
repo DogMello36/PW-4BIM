@@ -27,24 +27,90 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarCrud">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                            <i class="fa-solid fa-motorcycle"></i> Motos
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="<?php echo BASEURL; ?>customers"><i
-                                        class="fa-solid fa-motorcycle"></i> Gerenciar Motos</a>
-                            </li>
-                            <li><a class="dropdown-item" href="<?php echo BASEURL; ?>customers/add.php"><i
-                                        class="fa-solid fa-bicycle"></i> Nova Moto</a>
-                            </li>
-                        </ul>
-                    </li>
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <?php if (esta_logado()): ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#perfil-modal">
+                                <?php $fotoMini = foto_usuario_url($_SESSION['usuario']['foto'] ?? null); ?>
+                                <?php if ($fotoMini): ?>
+                                    <img src="<?php echo h($fotoMini); ?>" alt="" class="perfil-mini">
+                                <?php else: ?>
+                                    <i class="fa-solid fa-circle-user"></i>
+                                <?php endif; ?>
+                                <?php echo h($_SESSION['usuario']['login']); ?>
+                            </a>
+                        </li>
+                    <?php else: ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="<?php echo BASEURL; ?>login.php">
+                                <i class="fa-solid fa-right-to-bracket"></i> Entrar
+                            </a>
+                        </li>
+                    <?php endif; ?>
                 </ul>
             </div>
         </div>
     </nav>
+
+    <?php if (esta_logado()):
+    $usuarioLogado = $_SESSION['usuario'];
+    $ehAdmin = eh_admin();
+?>
+    <div class="modal fade" id="perfil-modal" tabindex="-1" aria-labelledby="perfil-titulo" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title" id="perfil-titulo">
+                        <i class="fa-solid fa-circle-user"></i> Meu perfil
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <?php $fotoPerfil = foto_usuario_url($usuarioLogado['foto'] ?? null); ?>
+                        <?php if ($fotoPerfil): ?>
+                            <img src="<?php echo h($fotoPerfil); ?>" alt="Foto de <?php echo h($usuarioLogado['login']); ?>"
+                                class="perfil-foto">
+                        <?php else: ?>
+                            <i class="fa-solid fa-circle-user fa-4x"></i>
+                        <?php endif; ?>
+                    </div>
+
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Usuário</dt>
+                        <dd class="col-sm-8"><?php echo h($usuarioLogado['login']); ?></dd>
+
+                        <dt class="col-sm-4">Perfil</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge <?php echo $ehAdmin ? 'bg-warning text-dark' : 'bg-secondary'; ?>">
+                                <?php echo h($usuarioLogado['perfil']); ?>
+                            </span>
+                        </dd>
+
+                        <dt class="col-sm-4">ID</dt>
+                        <dd class="col-sm-8">#<?php echo (int) $usuarioLogado['id']; ?></dd>
+
+                        <dt class="col-sm-4">Acesso</dt>
+                        <dd class="col-sm-8">
+                            <?php echo $ehAdmin
+                                ? 'Clientes, motos e usuários (acesso total).'
+                                : 'Clientes e motos (cadastrar, editar e excluir).'; ?>
+                        </dd>
+                    </dl>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fechar</button>
+                    <a href="<?php echo BASEURL; ?>logout.php" class="btn btn-dark">
+                        <i class="fa-solid fa-right-from-bracket"></i> Sair
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+<?php endif; ?>
 
     <main class="container">

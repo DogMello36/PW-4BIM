@@ -2,7 +2,7 @@
 
 /** O nome do banco de dados*/
 // define('DB_NAME', 'wda_crud');
-const DB_NAME = "wda_crud";
+const DB_NAME = "bd";
 
 /** Usuário do banco de dados MySQL */
 define('DB_USER', 'root');

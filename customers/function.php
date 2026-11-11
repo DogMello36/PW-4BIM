@@ -3,6 +3,9 @@ ob_start(); //output buffer aberto, para não dar erro de header location
 
 include('../config.php');
 include(DBAPI);
+include_once('../inc/auth.php');
+
+const MOTOS_TABELA = 'motos';
 
 $customers = null;
 $customer = null;
@@ -12,7 +15,10 @@ $customer = null;
  */
 function formatData($data, $formato)
 {
-	$dt = new Datetime($data, new DateTimeZone("America/Sao_Paulo"));// "-0300"
+	if (empty($data)) {
+		return '—';
+	}
+	$dt = new Datetime($data, new DateTimeZone("America/Sao_Paulo"));
 	return $dt->format($formato);
 }
 
@@ -34,14 +40,54 @@ function cep($cep)
 }
 
 /**
- *  Listagem de Clientes
+ *  Pega só os campos permitidos do formulário (ignora qualquer outro)
+ */
+function dadosMoto($origem)
+{
+	return [
+		'Modelo' => trim($origem['Modelo'] ?? ''),
+		'Marca'  => trim($origem['Marca'] ?? ''),
+		'Motor'  => trim($origem['Motor'] ?? ''),
+	];
+}
+
+/**
+ *  Validação: campos obrigatórios e tamanho máximo (igual às colunas do banco)
+ */
+function validarMoto($dados)
+{
+	$limites = ['Modelo' => 50, 'Marca' => 30, 'Motor' => 20];
+	$erros = [];
+
+	foreach ($limites as $campo => $max) {
+		if ($dados[$campo] === '') {
+			$erros[] = "O campo $campo é obrigatório.";
+		} elseif (mb_strlen($dados[$campo]) > $max) {
+			$erros[] = "O campo $campo aceita no máximo $max caracteres.";
+		}
+	}
+	return $erros;
+}
+
+function definir_erro($mensagens)
+{
+	$_SESSION['message'] = is_array($mensagens) ? implode('<br>', $mensagens) : $mensagens;
+	$_SESSION['type'] = "danger";
+}
+
+/**
+ *  Listagem de Motos (pública: visitante também vê)
  */
 function index()
 {
 	global $customers;
-	$customers = find_all("customers");
-	//find_all e find é a mesma coisa, resulta na mesma coisa
+	$customers = find_all(MOTOS_TABELA);
 }
+
+/**
+ *  Upload da imagem.
+ *  Retorna: nome do arquivo novo, a imagem atual (se nada foi enviado) ou false se deu erro.
+ */
 function uploadImagem($imagemAtual = null)
 {
 	if (empty($_FILES['customer']['name']['imagem']) || $_FILES['customer']['error']['imagem'] === UPLOAD_ERR_NO_FILE) {
@@ -49,9 +95,8 @@ function uploadImagem($imagemAtual = null)
 	}
 
 	if ($_FILES['customer']['error']['imagem'] !== UPLOAD_ERR_OK) {
-		$_SESSION['message'] = "Não foi possível enviar a imagem.";
-		$_SESSION['type'] = "danger";
-		return $imagemAtual;
+		definir_erro("Não foi possível enviar a imagem.");
+		return false;
 	}
 
 	$extensoesPermitidas = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
@@ -59,15 +104,19 @@ function uploadImagem($imagemAtual = null)
 	$extensao = strtolower(pathinfo($nomeOriginal, PATHINFO_EXTENSION));
 
 	if (!in_array($extensao, $extensoesPermitidas)) {
-		$_SESSION['message'] = "Formato de imagem não permitido. Use JPG, PNG, GIF ou WEBP.";
-		$_SESSION['type'] = "danger";
-		return $imagemAtual;
+		definir_erro("Formato de imagem não permitido. Use JPG, PNG, GIF ou WEBP.");
+		return false;
 	}
 
 	if ($_FILES['customer']['size']['imagem'] > 2 * 1024 * 1024) { // 2MB
-		$_SESSION['message'] = "A imagem deve ter no máximo 2MB.";
-		$_SESSION['type'] = "danger";
-		return $imagemAtual;
+		definir_erro("A imagem deve ter no máximo 2MB.");
+		return false;
+	}
+
+	// confere se o conteúdo é mesmo uma imagem, e não só a extensão
+	if (@getimagesize($_FILES['customer']['tmp_name']['imagem']) === false) {
+		definir_erro("O arquivo enviado não é uma imagem válida.");
+		return false;
 	}
 
 	$pastaUploads = __DIR__ . '/../uploads/';
@@ -79,80 +128,160 @@ function uploadImagem($imagemAtual = null)
 	$nomeArquivo = substr(md5(uniqid('', true)), 0, 20) . '.' . $extensao;
 
 	if (!move_uploaded_file($_FILES['customer']['tmp_name']['imagem'], $pastaUploads . $nomeArquivo)) {
-		$_SESSION['message'] = "Não foi possível salvar a imagem no servidor.";
-		$_SESSION['type'] = "danger";
-		return $imagemAtual;
+		definir_erro("Não foi possível salvar a imagem no servidor.");
+		return false;
 	}
 
 	return $nomeArquivo;
 }
 
 /**
- *  Visualização de um Cliente
+ *  Apaga o arquivo de imagem da pasta uploads
  */
-function view($id = null)
+function apagarImagem($nomeArquivo)
 {
-	global $customer;
-	$customer = find('customers', $id);
-}
-
-/**
- *  Cadastro de Clientes
- */
-function add()
-{
-	if (!empty($_POST['customer'])) {
-
-		$today = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
-
-		$customer = $_POST['customer'];
-		$customer['DataCad'] = $today->format("Y-m-d H:i:s");
-		$customer['Imagem'] = uploadImagem();
-
-		save('customers', $customer);
-		header('location: index.php');
+	if (empty($nomeArquivo)) {
+		return;
+	}
+	$caminho = __DIR__ . '/../uploads/' . basename($nomeArquivo);
+	if (is_file($caminho)) {
+		unlink($caminho);
 	}
 }
 
 /**
- *	Atualizacao/Edicao de Cliente
+ *  Visualização de uma Moto (pública)
  */
-function edit() {
+function view($id = null)
+{
+	global $customer;
 
-  $now = date_create('now', new DateTimeZone('America/Sao_Paulo'));
+	$id = (int) $id;
+	$customer = $id > 0 ? find(MOTOS_TABELA, $id) : null;
 
-  if (isset($_GET['id'])) {
-
-    $id = $_GET['id'];
-
-        if (isset($_POST['customer'])) {
-
-      $customer = $_POST['customer'];
-
-      $clienteAtual = find('customers', $id);
-      $customer['Imagem'] = uploadImagem($clienteAtual['Imagem'] ?? null);
-
-      update("customers", $id, $customer);
-      header("location: index.php");
-    } else {
-
-      global $customer;
-      $customer = find("customers", $id);
-    } 
-  } else {
-    header("location: index.php");
-  }
+	if (!$customer) {
+		$_SESSION['message'] = "Moto não encontrada.";
+		$_SESSION['type'] = "warning";
+		header('location: index.php');
+		exit;
+	}
 }
 
 /**
- *  Exclusão de um Cliente
+ *  Cadastro de Motos (exige login)
  */
-function delete($id = null) {
+function add()
+{
+	exigir_login();
 
-  global $customer;
-  $customer = remove('customers', $id);
+	if (empty($_POST['customer'])) {
+		return;
+	}
 
-  header("location: index.php");
+	$dados = dadosMoto($_POST['customer']);
+	$erros = validarMoto($dados);
+	if ($erros) {
+		definir_erro($erros);
+		return;
+	}
+
+	$imagem = uploadImagem();
+	if ($imagem === false) {
+		return;
+	}
+
+	$hoje = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
+	$dados['DataCad'] = $hoje->format("Y-m-d H:i:s");
+	if ($imagem) {
+		$dados['Imagem'] = $imagem;
+	}
+
+	save(MOTOS_TABELA, $dados);
+	header('location: index.php');
+	exit;
+}
+
+/**
+ *	Atualização/Edição de Moto (exige login)
+ */
+function edit()
+{
+	global $customer;
+	exigir_login();
+
+	$id = (int) ($_GET['id'] ?? 0);
+	if ($id <= 0) {
+		header('location: index.php');
+		exit;
+	}
+
+	$atual = find(MOTOS_TABELA, $id);
+	if (!$atual) {
+		$_SESSION['message'] = "Moto não encontrada.";
+		$_SESSION['type'] = "warning";
+		header('location: index.php');
+		exit;
+	}
+
+	if (isset($_POST['customer'])) {
+		$dados = dadosMoto($_POST['customer']);
+		$erros = validarMoto($dados);
+
+		if ($erros) {
+			definir_erro($erros);
+			$customer = array_merge($atual, $dados); // mantém o que foi digitado
+			return;
+		}
+
+		$imagem = uploadImagem($atual['Imagem'] ?? null);
+		if ($imagem === false) {
+			$customer = array_merge($atual, $dados);
+			return;
+		}
+
+		if ($imagem) {
+			$dados['Imagem'] = $imagem;
+		}
+
+		update(MOTOS_TABELA, $id, $dados);
+
+		// trocou a imagem: apaga a antiga
+		if ($imagem && $imagem !== ($atual['Imagem'] ?? null)) {
+			apagarImagem($atual['Imagem'] ?? null);
+		}
+
+		header("location: index.php");
+		exit;
+	}
+
+	$customer = $atual;
+}
+
+/**
+ *  Exclusão de uma Moto (exige login)
+ */
+function delete($id = null)
+{
+	exigir_login();
+
+	$id = (int) $id;
+	if ($id > 0) {
+		$atual = find(MOTOS_TABELA, $id);
+
+		if ($atual) {
+			remove(MOTOS_TABELA, $id);
+
+			if (($_SESSION['type'] ?? '') === 'success') {
+				apagarImagem($atual['Imagem'] ?? null);
+			}
+		} else {
+			$_SESSION['message'] = "Moto não encontrada.";
+			$_SESSION['type'] = "warning";
+		}
+	}
+
+	header("location: index.php");
+	exit;
 }
 
 ?>

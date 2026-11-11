@@ -1,6 +1,18 @@
 <?php
 include 'config.php';
 include DBAPI;
+include_once ABSPATH . 'inc/auth.php';
+
+// visitante que clicou em "Continuar sem login"
+if (isset($_GET['visitante'])) {
+	$_SESSION['visitante'] = true;
+}
+
+// abriu o site sem login e sem escolher ser visitante: vai para o login
+if (!esta_logado() && empty($_SESSION['visitante'])) {
+	header('Location: ' . BASEURL . 'login.php');
+	exit;
+}
 
 include HEADER_TEMPLATE;
 $erro = null;
