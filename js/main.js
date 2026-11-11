@@ -2,15 +2,15 @@
  * Passa os dados do cliente para o Modal, e atualiza o link para exclusão
  */
 $('#delete-modal').on('show.bs.modal', function (event) {
-  
+
   var button = $(event.relatedTarget);
   var id = button.data('customer');
-  
-  var modal = $(this); // this -> indica o modal que está sendo aberto
-  modal.find('.modal-title').text('Excluir Cliente #' + id);
+  var rotulo = button.data('rotulo') || 'Item';
+
+  var modal = $(this);
+  modal.find('.modal-title').text('Excluir ' + rotulo + ' #' + id);
   modal.find('#confirm').attr('href', 'delete.php?id=' + id);
 })
-
 /**
  * Máscara de CPF (000.000.000-00) / CNPJ (00.000.000/0000-00),
  * aplicada conforme a quantidade de dígitos digitados.

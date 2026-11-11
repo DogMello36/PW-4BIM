@@ -60,3 +60,20 @@ function foto_usuario_url($foto)
 	}
 	return BASEURL . 'uploads/usuarios/' . rawurlencode($arquivo);
 }
+
+/** Mostra a mensagem da sessão (se houver) e limpa */
+function exibir_mensagem()
+{
+	if (empty($_SESSION['message'])) {
+		return;
+	}
+	$tiposOk = ['success', 'danger', 'warning', 'info'];
+	$tipo = in_array($_SESSION['type'] ?? '', $tiposOk) ? $_SESSION['type'] : 'info';
+
+	echo '<div class="alert alert-' . $tipo . ' alert-dismissible fade show" role="alert">'
+		. $_SESSION['message']
+		. '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>'
+		. '</div>';
+
+	clear_messages();
+}

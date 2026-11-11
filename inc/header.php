@@ -27,7 +27,42 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarCrud">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <i class="fa-solid fa-motorcycle"></i> Motos
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="<?php echo BASEURL; ?>motos">
+                                <i class="fa-solid fa-motorcycle"></i> Gerenciar Motos</a></li>
+                        <?php if (esta_logado()): ?>
+                            <li><a class="dropdown-item" href="<?php echo BASEURL; ?>motos/add.php">
+                                    <i class="fa-solid fa-bicycle"></i> Nova Moto</a></li>
+                        <?php endif; ?>
+                    </ul>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <i class="fa-solid fa-users"></i> Clientes
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="<?php echo BASEURL; ?>customers">
+                                <i class="fa-solid fa-users"></i> Gerenciar Clientes</a></li>
+                        <?php if (esta_logado()): ?>
+                            <li><a class="dropdown-item" href="<?php echo BASEURL; ?>customers/add.php">
+                                    <i class="fa-solid fa-user-plus"></i> Novo Cliente</a></li>
+                        <?php endif; ?>
+                    </ul>
+                </li>
+
+            </ul>
+                
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                     <?php if (esta_logado()): ?>
                         <li class="nav-item">
                             <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#perfil-modal">

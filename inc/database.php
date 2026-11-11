@@ -2,13 +2,12 @@
 
 $mysqli = new mysqli_driver();
 $mysqli->report_mode = MYSQLI_REPORT_STRICT | MYSQLI_REPORT_ERROR;
-//report_mode -> é um atributo;
 
 function open_database()
 {
 	try {
 		$conn = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
-		$conn->set_charset("utf8"); // metodo;
+		$conn->set_charset("utf8mb4");
 		return $conn;
 	} catch (Exception $e) {
 		throw new Exception("Erro ao conectar no banco de dados\n {$e->getMessage()}");
@@ -25,156 +24,226 @@ function close_database($conn)
 }
 
 /**
- *  Pesquisa um Registro pelo ID em uma Tabela
+ *  Nome de tabela/coluna não pode ser parâmetro do prepared statement,
+ *  então só aceita letras, números e "_" e coloca entre crases.
  */
-function find($table = null, $id = null)
+function identificador($nome)
 {
+	if (!is_string($nome) || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $nome)) {
+		throw new InvalidArgumentException("Nome inválido de tabela/coluna.");
+	}
+	return "`$nome`";
+}
+
+/**
+ *  Registra o erro real no log do servidor e mostra uma mensagem amigável.
+ */
+function erro_banco($e)
+{
+	error_log($e->getMessage());
+
+	if ($e instanceof mysqli_sql_exception && (int) $e->getCode() === 1062) {
+		$_SESSION['message'] = "Já existe um registro com esses dados.";
+	} else {
+		$_SESSION['message'] = "Não foi possível realizar a operação.";
+	}
+	$_SESSION['type'] = 'danger';
+}
+
+/**
+ *  Pesquisa um registro pelo ID. $pk = nome da coluna de ID da tabela.
+ *  Sem $id, devolve todos os registros.
+ */
+function find($table = null, $id = null, $pk = 'Id')
+{
+	if (!$id) {
+		return find_all($table);
+	}
+
 	$found = null;
+	$database = null;
 
 	try {
 		$database = open_database();
-
-		if ($id) {
-			$sql = "SELECT * FROM $table WHERE id = $id";
-			$result = $database->query($sql);
-
-			if ($result->num_rows > 0) {
-				$found = $result->fetch_assoc();
-			}
-
-		} else {
-
-			$sql = "SELECT * FROM $table";
-			$result = $database->query($sql);
-
-			if ($result->num_rows > 0) {
-				$found = $result->fetch_all(MYSQLI_ASSOC);
-
-				/* Metodo alternativo
-				$found = [];
-				while ($row = $result->fetch_assoc()) {
-				  array_push($found, $row);
-				} */
-			}
-		}
+		$sql = "SELECT * FROM " . identificador($table) . " WHERE " . identificador($pk) . " = ? LIMIT 1";
+		$stmt = $database->prepare($sql);
+		$stmt->bind_param('s', $id);
+		$stmt->execute();
+		$found = $stmt->get_result()->fetch_assoc() ?: null;
+		$stmt->close();
 	} catch (Exception $e) {
-		$_SESSION['message'] = $e->GetMessage();
-		$_SESSION['type'] = 'danger';
+		erro_banco($e);
 	}
 
-	close_database($database);
+	if ($database) {
+		close_database($database);
+	}
 	return $found;
 }
 
 /**
- *  Pesquisa Todos os Registros de uma Tabela
+ *  Pesquisa o primeiro registro em que uma coluna tem determinado valor
+ *  (usado para checar CPF duplicado, por exemplo).
  */
-function find_all($table)
+function find_by($table, $column, $value)
 {
-	return find($table);
+	$found = null;
+	$database = null;
+
+	try {
+		$database = open_database();
+		$sql = "SELECT * FROM " . identificador($table) . " WHERE " . identificador($column) . " = ? LIMIT 1";
+		$stmt = $database->prepare($sql);
+		$stmt->bind_param('s', $value);
+		$stmt->execute();
+		$found = $stmt->get_result()->fetch_assoc() ?: null;
+		$stmt->close();
+	} catch (Exception $e) {
+		erro_banco($e);
+	}
+
+	if ($database) {
+		close_database($database);
+	}
+	return $found;
 }
 
 /**
- *  Insere um registro no BD
+ *  Todos os registros de uma tabela, opcionalmente ordenados por uma coluna.
+ */
+function find_all($table, $orderBy = null)
+{
+	$found = null;
+	$database = null;
+
+	try {
+		$database = open_database();
+		$sql = "SELECT * FROM " . identificador($table);
+		if ($orderBy) {
+			$sql .= " ORDER BY " . identificador($orderBy);
+		}
+		$result = $database->query($sql);
+
+		if ($result->num_rows > 0) {
+			$found = $result->fetch_all(MYSQLI_ASSOC);
+		}
+	} catch (Exception $e) {
+		erro_banco($e);
+	}
+
+	if ($database) {
+		close_database($database);
+	}
+	return $found;
+}
+
+/**
+ *  Insere um registro. Retorna true se deu certo.
  */
 function save($table = null, $data = null)
 {
-
-	$database = open_database();
-
-	$columns = null;
-	$values = null;
-
-	//print_r($data);
-
-	foreach ($data as $key => $value) {
-		$columns .= trim($key, "'") . ","; //.= -> concatena
-		$values .= "'$value',";
-		/*
-			'$value' -> mesmo que o campo seja passado entre apostrofo, o bd interpreta corretamente caso o campo seja do tipo int ou outros
-		*/
-	}
-
-	// remove a ultima virgula
-	$columns = rtrim($columns, ',');
-	$values = rtrim($values, ',');
-
-	$sql = "INSERT INTO $table ($columns) VALUES ($values);";
+	$database = null;
+	$ok = false;
 
 	try {
-		$database->query($sql); // executa a query
+		$database = open_database();
+
+		$colunas = [];
+		$marcas = [];
+		$valores = [];
+		foreach ($data as $coluna => $valor) {
+			$colunas[] = identificador($coluna);
+			$marcas[] = '?';
+			$valores[] = $valor;
+		}
+
+		$sql = "INSERT INTO " . identificador($table)
+			. " (" . implode(',', $colunas) . ") VALUES (" . implode(',', $marcas) . ")";
+		$stmt = $database->prepare($sql);
+		$stmt->bind_param(str_repeat('s', count($valores)), ...$valores);
+		$stmt->execute();
+		$stmt->close();
 
 		$_SESSION["message"] = "Registro cadastrado com sucesso.";
 		$_SESSION["type"] = "success";
-
+		$ok = true;
 	} catch (Exception $e) {
-
-		$_SESSION["message"] = "Nao foi possivel realizar a operacao.";
-		$_SESSION["type"] = "danger";
+		erro_banco($e);
 	}
 
-	close_database($database);
+	if ($database) {
+		close_database($database);
+	}
+	return $ok;
 }
 
 /**
- *  Atualiza um registro em uma tabela, por ID
+ *  Atualiza um registro por ID. Retorna true se deu certo.
  */
-function update($table = null, $id = 0, $data = null)
+function update($table = null, $id = 0, $data = null, $pk = 'Id')
 {
-
-	$database = open_database();
-
-	$items = null;
-
-	foreach ($data as $key => $value) {
-		$items .= trim($key, "'") . "='$value',";
-	}
-
-	// remove a ultima virgula
-	$items = rtrim($items, ',');
-
-	// $sql = "UPDATE " . $table;
-	// $sql .= " SET $items";
-	// $sql .= " WHERE id=" . $id . ";";
-
-	$sql = "UPDATE $table SET $items WHERE id=$id;";
+	$database = null;
+	$ok = false;
 
 	try {
-		$database->query($sql);
+		$database = open_database();
+
+		$sets = [];
+		$valores = [];
+		foreach ($data as $coluna => $valor) {
+			$sets[] = identificador($coluna) . " = ?";
+			$valores[] = $valor;
+		}
+		$valores[] = $id;
+
+		$sql = "UPDATE " . identificador($table) . " SET " . implode(', ', $sets)
+			. " WHERE " . identificador($pk) . " = ?";
+		$stmt = $database->prepare($sql);
+		$stmt->bind_param(str_repeat('s', count($valores)), ...$valores);
+		$stmt->execute();
+		$stmt->close();
 
 		$_SESSION["message"] = "Registro atualizado com sucesso.";
 		$_SESSION["type"] = "success";
-
+		$ok = true;
 	} catch (Exception $e) {
-
-		$_SESSION["message"] = "Nao foi possivel realizar a operacao.";
-		$_SESSION["type"] = "danger";
+		erro_banco($e);
 	}
 
-	close_database($database);
+	if ($database) {
+		close_database($database);
+	}
+	return $ok;
 }
 
-function remove( $table = null, $id = null ) {
+/**
+ *  Remove um registro por ID. Retorna true se deu certo.
+ */
+function remove($table = null, $id = null, $pk = 'Id')
+{
+	$database = null;
+	$ok = false;
 
-  $database = open_database();
-	
-  try {
-    if ($id) {
+	try {
+		if ($id) {
+			$database = open_database();
+			$sql = "DELETE FROM " . identificador($table) . " WHERE " . identificador($pk) . " = ?";
+			$stmt = $database->prepare($sql);
+			$stmt->bind_param('s', $id);
+			$stmt->execute();
+			$stmt->close();
 
-      $sql = "DELETE FROM $table WHERE id = $id";
-      $result = null; //$database->query($sql);
+			$_SESSION["message"] = "Registro removido com sucesso.";
+			$_SESSION["type"] = "success";
+			$ok = true;
+		}
+	} catch (Exception $e) {
+		erro_banco($e);
+	}
 
-      if ($result = $database->query($sql)) {   	
-        $_SESSION["message"] = "Registro Removido com Sucesso.";
-        $_SESSION["type"] = "success";
-      }
-    }
-  } catch (Exception $e) { 
-
-    $_SESSION["message"] = "Não foi possível realizar a operação:<br>{$e->GetMessage()}";
-    $_SESSION["type"] ="danger";
-  }
-
-  close_database($database);
+	if ($database) {
+		close_database($database);
+	}
+	return $ok;
 }
 ?>

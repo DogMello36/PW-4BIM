@@ -1,72 +1,124 @@
 <?php
-ob_start(); //output buffer aberto, para não dar erro de header location
+ob_start();
 
 include('../config.php');
 include(DBAPI);
 include_once('../inc/auth.php');
 
-const MOTOS_TABELA = 'motos';
+const CLIENTES_TABELA = 'Cliente';
+const CLIENTES_PK = 'Id_Cli';
 
-$customers = null;
-$customer = null;
+$clientes = null;
+$cliente = null;
 
-/**
- *  Formatar as datas
- */
-function formatData($data, $formato)
+/** (00) 00000-0000 ou (00) 0000-0000 */
+function formatTelefone($tel)
 {
-	if (empty($data)) {
-		return '—';
+	$d = preg_replace('/\D/', '', (string) $tel);
+	if (strlen($d) === 11) {
+		return sprintf('(%s) %s-%s', substr($d, 0, 2), substr($d, 2, 5), substr($d, 7));
 	}
-	$dt = new Datetime($data, new DateTimeZone("America/Sao_Paulo"));
-	return $dt->format($formato);
+	if (strlen($d) === 10) {
+		return sprintf('(%s) %s-%s', substr($d, 0, 2), substr($d, 2, 4), substr($d, 6));
+	}
+	return $tel ? $tel : '—';
 }
 
-/**
- *  Formatar os telefones
- */
-function telefone($tel)
-{ //15999990000
-	return "(" . substr($tel, 0, 2) . ")" . substr($tel, 2, 5)
-		. "-" . substr($tel, 7, 4);
-}
-
-/**
- *  Formatar os cep´s
- */
-function cep($cep)
+/** 000.000.000-00 */
+function formatCpf($cpf)
 {
-	return substr($cep, 0, 5) . "-" . substr($cep, 5, 3);
+	$d = preg_replace('/\D/', '', (string) $cpf);
+	if (strlen($d) !== 11) {
+		return $cpf;
+	}
+	return substr($d, 0, 3) . '.' . substr($d, 3, 3) . '.' . substr($d, 6, 3) . '-' . substr($d, 9, 2);
 }
 
-/**
- *  Pega só os campos permitidos do formulário (ignora qualquer outro)
- */
-function dadosMoto($origem)
+/** Confere os dígitos verificadores do CPF */
+function validar_cpf($cpf)
+{
+	$cpf = preg_replace('/\D/', '', (string) $cpf);
+
+	if (strlen($cpf) !== 11 || preg_match('/^(\d)\1{10}$/', $cpf)) {
+		return false;
+	}
+
+	for ($t = 9; $t < 11; $t++) {
+		$soma = 0;
+		for ($c = 0; $c < $t; $c++) {
+			$soma += $cpf[$c] * (($t + 1) - $c);
+		}
+		$digito = ((10 * $soma) % 11) % 10;
+		if ($cpf[$c] != $digito) {
+			return false;
+		}
+	}
+	return true;
+}
+
+/** Pega só os campos permitidos do formulário */
+function dadosCliente($origem)
 {
 	return [
-		'Modelo' => trim($origem['Modelo'] ?? ''),
-		'Marca'  => trim($origem['Marca'] ?? ''),
-		'Motor'  => trim($origem['Motor'] ?? ''),
+		'Nome_Cli'     => trim($origem['Nome_Cli'] ?? ''),
+		'Tel_Cli'      => preg_replace('/\D/', '', $origem['Tel_Cli'] ?? ''),
+		'CPF_Cli'      => preg_replace('/\D/', '', $origem['CPF_Cli'] ?? ''),
+		'Email_Cli'    => trim($origem['Email_Cli'] ?? ''),
+		'Endereco_Cli' => trim($origem['Endereco_Cli'] ?? ''),
 	];
 }
 
-/**
- *  Validação: campos obrigatórios e tamanho máximo (igual às colunas do banco)
- */
-function validarMoto($dados)
+/** Validação dos campos. $idAtual = ID do cliente sendo editado (0 no cadastro) */
+function validarCliente($d, $idAtual = 0)
 {
-	$limites = ['Modelo' => 50, 'Marca' => 30, 'Motor' => 20];
 	$erros = [];
 
-	foreach ($limites as $campo => $max) {
-		if ($dados[$campo] === '') {
-			$erros[] = "O campo $campo é obrigatório.";
-		} elseif (mb_strlen($dados[$campo]) > $max) {
-			$erros[] = "O campo $campo aceita no máximo $max caracteres.";
+	if ($d['Nome_Cli'] === '') {
+		$erros[] = "O campo Nome é obrigatório.";
+	} elseif (mb_strlen($d['Nome_Cli']) > 100) {
+		$erros[] = "O Nome aceita no máximo 100 caracteres.";
+	}
+
+	if ($d['CPF_Cli'] === '') {
+		$erros[] = "O campo CPF é obrigatório.";
+	} elseif (!validar_cpf($d['CPF_Cli'])) {
+		$erros[] = "CPF inválido.";
+	} else {
+		$outro = find_by(CLIENTES_TABELA, 'CPF_Cli', formatCpf($d['CPF_Cli']));
+		if ($outro && (int) $outro[CLIENTES_PK] !== (int) $idAtual) {
+			$erros[] = "Já existe um cliente cadastrado com esse CPF.";
 		}
 	}
+
+	if ($d['Tel_Cli'] !== '' && !in_array(strlen($d['Tel_Cli']), [10, 11])) {
+		$erros[] = "Telefone inválido. Informe DDD + número (10 ou 11 dígitos).";
+	}
+
+	if ($d['Email_Cli'] !== '') {
+		if (mb_strlen($d['Email_Cli']) > 100) {
+			$erros[] = "O E-mail aceita no máximo 100 caracteres.";
+		} elseif (!filter_var($d['Email_Cli'], FILTER_VALIDATE_EMAIL)) {
+			$erros[] = "E-mail inválido.";
+		}
+	}
+
+	if (mb_strlen($d['Endereco_Cli']) > 200) {
+		$erros[] = "O Endereço aceita no máximo 200 caracteres.";
+	}
+
 	return $erros;
+}
+
+/** Deixa os dados no formato que vai para o banco (CPF formatado, vazios viram NULL) */
+function prepararCliente($d)
+{
+	return [
+		'Nome_Cli'     => $d['Nome_Cli'],
+		'Tel_Cli'      => $d['Tel_Cli'] !== '' ? $d['Tel_Cli'] : null,
+		'CPF_Cli'      => formatCpf($d['CPF_Cli']),
+		'Email_Cli'    => $d['Email_Cli'] !== '' ? $d['Email_Cli'] : null,
+		'Endereco_Cli' => $d['Endereco_Cli'] !== '' ? $d['Endereco_Cli'] : null,
+	];
 }
 
 function definir_erro($mensagens)
@@ -75,138 +127,57 @@ function definir_erro($mensagens)
 	$_SESSION['type'] = "danger";
 }
 
-/**
- *  Listagem de Motos (pública: visitante também vê)
- */
+/** Listagem (pública) */
 function index()
 {
-	global $customers;
-	$customers = find_all(MOTOS_TABELA);
+	global $clientes;
+	$clientes = find_all(CLIENTES_TABELA, 'Nome_Cli');
 }
 
-/**
- *  Upload da imagem.
- *  Retorna: nome do arquivo novo, a imagem atual (se nada foi enviado) ou false se deu erro.
- */
-function uploadImagem($imagemAtual = null)
-{
-	if (empty($_FILES['customer']['name']['imagem']) || $_FILES['customer']['error']['imagem'] === UPLOAD_ERR_NO_FILE) {
-		return $imagemAtual;
-	}
-
-	if ($_FILES['customer']['error']['imagem'] !== UPLOAD_ERR_OK) {
-		definir_erro("Não foi possível enviar a imagem.");
-		return false;
-	}
-
-	$extensoesPermitidas = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-	$nomeOriginal = $_FILES['customer']['name']['imagem'];
-	$extensao = strtolower(pathinfo($nomeOriginal, PATHINFO_EXTENSION));
-
-	if (!in_array($extensao, $extensoesPermitidas)) {
-		definir_erro("Formato de imagem não permitido. Use JPG, PNG, GIF ou WEBP.");
-		return false;
-	}
-
-	if ($_FILES['customer']['size']['imagem'] > 2 * 1024 * 1024) { // 2MB
-		definir_erro("A imagem deve ter no máximo 2MB.");
-		return false;
-	}
-
-	// confere se o conteúdo é mesmo uma imagem, e não só a extensão
-	if (@getimagesize($_FILES['customer']['tmp_name']['imagem']) === false) {
-		definir_erro("O arquivo enviado não é uma imagem válida.");
-		return false;
-	}
-
-	$pastaUploads = __DIR__ . '/../uploads/';
-	if (!is_dir($pastaUploads)) {
-		mkdir($pastaUploads, 0755, true);
-	}
-
-	// nome curto o suficiente para caber na coluna varchar(30)
-	$nomeArquivo = substr(md5(uniqid('', true)), 0, 20) . '.' . $extensao;
-
-	if (!move_uploaded_file($_FILES['customer']['tmp_name']['imagem'], $pastaUploads . $nomeArquivo)) {
-		definir_erro("Não foi possível salvar a imagem no servidor.");
-		return false;
-	}
-
-	return $nomeArquivo;
-}
-
-/**
- *  Apaga o arquivo de imagem da pasta uploads
- */
-function apagarImagem($nomeArquivo)
-{
-	if (empty($nomeArquivo)) {
-		return;
-	}
-	$caminho = __DIR__ . '/../uploads/' . basename($nomeArquivo);
-	if (is_file($caminho)) {
-		unlink($caminho);
-	}
-}
-
-/**
- *  Visualização de uma Moto (pública)
- */
+/** Visualização (pública) */
 function view($id = null)
 {
-	global $customer;
+	global $cliente;
 
 	$id = (int) $id;
-	$customer = $id > 0 ? find(MOTOS_TABELA, $id) : null;
+	$cliente = $id > 0 ? find(CLIENTES_TABELA, $id, CLIENTES_PK) : null;
 
-	if (!$customer) {
-		$_SESSION['message'] = "Moto não encontrada.";
+	if (!$cliente) {
+		$_SESSION['message'] = "Cliente não encontrado.";
 		$_SESSION['type'] = "warning";
 		header('location: index.php');
 		exit;
 	}
 }
 
-/**
- *  Cadastro de Motos (exige login)
- */
+/** Cadastro (exige login) */
 function add()
 {
 	exigir_login();
 
-	if (empty($_POST['customer'])) {
+	if (empty($_POST['cliente'])) {
 		return;
 	}
 
-	$dados = dadosMoto($_POST['customer']);
-	$erros = validarMoto($dados);
+	$dados = dadosCliente($_POST['cliente']);
+	$erros = validarCliente($dados);
 	if ($erros) {
 		definir_erro($erros);
+		global $cliente;
+		$cliente = $dados; // mantém o que foi digitado
 		return;
 	}
 
-	$imagem = uploadImagem();
-	if ($imagem === false) {
-		return;
+	if (save(CLIENTES_TABELA, prepararCliente($dados))) {
+		header('location: index.php');
+		exit;
 	}
-
-	$hoje = new DateTime('now', new DateTimeZone('America/Sao_Paulo'));
-	$dados['DataCad'] = $hoje->format("Y-m-d H:i:s");
-	if ($imagem) {
-		$dados['Imagem'] = $imagem;
-	}
-
-	save(MOTOS_TABELA, $dados);
-	header('location: index.php');
-	exit;
 }
 
-/**
- *	Atualização/Edição de Moto (exige login)
- */
+/** Edição (exige login) */
 function edit()
 {
-	global $customer;
+	global $cliente;
 	exigir_login();
 
 	$id = (int) ($_GET['id'] ?? 0);
@@ -215,67 +186,46 @@ function edit()
 		exit;
 	}
 
-	$atual = find(MOTOS_TABELA, $id);
+	$atual = find(CLIENTES_TABELA, $id, CLIENTES_PK);
 	if (!$atual) {
-		$_SESSION['message'] = "Moto não encontrada.";
+		$_SESSION['message'] = "Cliente não encontrado.";
 		$_SESSION['type'] = "warning";
 		header('location: index.php');
 		exit;
 	}
 
-	if (isset($_POST['customer'])) {
-		$dados = dadosMoto($_POST['customer']);
-		$erros = validarMoto($dados);
+	if (isset($_POST['cliente'])) {
+		$dados = dadosCliente($_POST['cliente']);
+		$erros = validarCliente($dados, $id);
 
 		if ($erros) {
 			definir_erro($erros);
-			$customer = array_merge($atual, $dados); // mantém o que foi digitado
+			$cliente = array_merge($atual, $dados);
 			return;
 		}
 
-		$imagem = uploadImagem($atual['Imagem'] ?? null);
-		if ($imagem === false) {
-			$customer = array_merge($atual, $dados);
-			return;
+		if (update(CLIENTES_TABELA, $id, prepararCliente($dados), CLIENTES_PK)) {
+			header('location: index.php');
+			exit;
 		}
-
-		if ($imagem) {
-			$dados['Imagem'] = $imagem;
-		}
-
-		update(MOTOS_TABELA, $id, $dados);
-
-		// trocou a imagem: apaga a antiga
-		if ($imagem && $imagem !== ($atual['Imagem'] ?? null)) {
-			apagarImagem($atual['Imagem'] ?? null);
-		}
-
-		header("location: index.php");
-		exit;
+		$cliente = array_merge($atual, $dados);
+		return;
 	}
 
-	$customer = $atual;
+	$cliente = $atual;
 }
 
-/**
- *  Exclusão de uma Moto (exige login)
- */
+/** Exclusão (exige login) */
 function delete($id = null)
 {
 	exigir_login();
 
 	$id = (int) $id;
 	if ($id > 0) {
-		$atual = find(MOTOS_TABELA, $id);
-
-		if ($atual) {
-			remove(MOTOS_TABELA, $id);
-
-			if (($_SESSION['type'] ?? '') === 'success') {
-				apagarImagem($atual['Imagem'] ?? null);
-			}
+		if (find(CLIENTES_TABELA, $id, CLIENTES_PK)) {
+			remove(CLIENTES_TABELA, $id, CLIENTES_PK);
 		} else {
-			$_SESSION['message'] = "Moto não encontrada.";
+			$_SESSION['message'] = "Cliente não encontrado.";
 			$_SESSION['type'] = "warning";
 		}
 	}
@@ -283,5 +233,4 @@ function delete($id = null)
 	header("location: index.php");
 	exit;
 }
-
 ?>

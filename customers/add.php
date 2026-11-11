@@ -4,47 +4,49 @@ add();
 include HEADER_TEMPLATE;
 ?>
 
-<h2>Nova Moto</h2>
+<h2>Novo Cliente</h2>
 
-<form action="add.php" method="post" enctype="multipart/form-data">
-    <!-- area de campos do form -->
+<?php exibir_mensagem(); ?>
+
+<form action="add.php" method="post">
     <hr>
     <div class="row">
-        <div class="form-group col-md-7">
-            <label for="modelo">Modelo</label>
-            <input type="text" class="form-control" id="modelo" name="customer[Modelo]">
+        <div class="form-group col-md-8">
+            <label for="nome">Nome</label>
+            <input type="text" class="form-control" id="nome" name="cliente[Nome_Cli]" maxlength="100" required
+                value="<?php echo h($cliente['Nome_Cli'] ?? ''); ?>">
         </div>
 
-        <div class="form-group col-md-3">
-            <label for="marca">Marca</label>
-            <input type="text" class="form-control" id="marca" name="customer[Marca]">
-        </div>
-
-        <div class="form-group col-md-2">
-            <label for="motor">Motor</label>
-            <input type="text" class="form-control" id="motor" name="customer[Motor]">
-        </div>
-    
-
-        <div class="form-group col-md-2">
-            <label for="created">Data de Cadastro</label>
-            <input type="date" class="form-control" id="created" name="customer[DataCad]" disabled>
-        </div>
-   
         <div class="form-group col-md-4">
-            <label for="imagem">Imagem</label>
-            <input type="file" class="form-control" id="imagem" name="customer[imagem]"
-                accept="image/png, image/jpeg, image/gif, image/webp">
-            <small class="rl-hint">JPG, PNG, GIF ou WEBP, até 2MB.</small>
-
-            <div id="imagem-preview-wrapper" class="rl-current-image" style="display: none;">
-                <img id="imagem-preview" src="" alt="Prévia da imagem selecionada">
-                <span>Prévia da imagem selecionada</span>
-            </div>
+            <label for="cpf_cnpj">CPF</label>
+            <input type="text" class="form-control" id="cpf_cnpj" name="cliente[CPF_Cli]" maxlength="14"
+                placeholder="000.000.000-00" required value="<?php echo h($cliente['CPF_Cli'] ?? ''); ?>">
         </div>
     </div>
 
-    <div id="actions" class="row">
+    <div class="row">
+        <div class="form-group col-md-4">
+            <label for="phone">Telefone</label>
+            <input type="text" class="form-control" id="phone" name="cliente[Tel_Cli]" maxlength="11"
+                placeholder="DDD + número" value="<?php echo h($cliente['Tel_Cli'] ?? ''); ?>">
+        </div>
+
+        <div class="form-group col-md-8">
+            <label for="email">E-mail</label>
+            <input type="email" class="form-control" id="email" name="cliente[Email_Cli]" maxlength="100"
+                value="<?php echo h($cliente['Email_Cli'] ?? ''); ?>">
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="form-group col-md-12">
+            <label for="endereco">Endereço</label>
+            <input type="text" class="form-control" id="endereco" name="cliente[Endereco_Cli]" maxlength="200"
+                value="<?php echo h($cliente['Endereco_Cli'] ?? ''); ?>">
+        </div>
+    </div>
+
+    <div id="actions" class="row mt-3">
         <div class="col-md-12">
             <button type="submit" class="btn btn-secondary mb-2">
                 <i class="fa-solid fa-floppy-disk"></i> Salvar
@@ -55,26 +57,5 @@ include HEADER_TEMPLATE;
         </div>
     </div>
 </form>
-
-<script>
-    document.getElementById('imagem').addEventListener('change', function (event) {
-        var wrapper = document.getElementById('imagem-preview-wrapper');
-        var preview = document.getElementById('imagem-preview');
-        var arquivo = event.target.files[0];
-
-        if (!arquivo) {
-            wrapper.style.display = 'none';
-            preview.src = '';
-            return;
-        }
-
-        var leitor = new FileReader();
-        leitor.onload = function (e) {
-            preview.src = e.target.result;
-            wrapper.style.display = 'flex';
-        };
-        leitor.readAsDataURL(arquivo);
-    });
-</script>
 
 <?php include FOOTER_TEMPLATE; ?>

@@ -29,21 +29,24 @@ try {
 <?php if (!$erro): ?>
 
 	<div class="row">
-		<div class="col-xs-6 col-sm-3 col-md-2">
-			<a href="customers/add.php" class="btn btn-secondary">
-				<div class="row">
-					<div class="col-xs-12 text-center">
-						<i class="fa-solid fa-bicycle i"></i>
+
+		<?php if (esta_logado()): ?>
+			<div class="col-xs-6 col-sm-3 col-md-2">
+				<a href="motos/add.php" class="btn btn-secondary">
+					<div class="row">
+						<div class="col-xs-12 text-center">
+							<i class="fa-solid fa-bicycle i"></i>
+						</div>
+						<div class="col-xs-12 text-center">
+							<p>Nova Moto</p>
+						</div>
 					</div>
-					<div class="col-xs-12 text-center">
-						<p>Nova Moto</p>
-					</div>
-				</div>
-			</a>
-		</div>
+				</a>
+			</div>
+		<?php endif; ?>
 
 		<div class="col-xs-6 col-sm-3 col-md-2">
-			<a href="customers" class="btn btn-light">
+			<a href="motos" class="btn btn-light">
 				<div class="row">
 					<div class="col-xs-12 text-center">
 						<i class="fa-solid fa-motorcycle i"></i>
@@ -54,12 +57,41 @@ try {
 				</div>
 			</a>
 		</div>
+
+		<?php if (esta_logado()): ?>
+			<div class="col-xs-6 col-sm-3 col-md-2">
+				<a href="customers/add.php" class="btn btn-secondary">
+					<div class="row">
+						<div class="col-xs-12 text-center">
+							<i class="fa-solid fa-user-plus i"></i>
+						</div>
+						<div class="col-xs-12 text-center">
+							<p>Novo Cliente</p>
+						</div>
+					</div>
+				</a>
+			</div>
+		<?php endif; ?>
+
+		<div class="col-xs-6 col-sm-3 col-md-2">
+			<a href="customers" class="btn btn-light">
+				<div class="row">
+					<div class="col-xs-12 text-center">
+						<i class="fa-solid fa-users i"></i>
+					</div>
+					<div class="col-xs-12 text-center">
+						<p>Clientes</p>
+					</div>
+				</div>
+			</a>
+		</div>
+
 	</div>
 
 <?php else: ?>
 	<div class="alert alert-danger" role="alert">
 		<p><b>ERRO:</b> Não foi possível Conectar ao Banco de Dados!<br>
-			<?= $erro ?>
+			<?= h($erro) ?>
 		</p>
 	</div>
 

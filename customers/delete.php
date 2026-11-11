@@ -4,12 +4,14 @@ include "function.php";
 try {
     if (isset($_GET['id'])) {
         delete($_GET['id']);
-    } //else {
-    //     die("ERRO: ID não definido.");
-    // }
+    } else {
+        header("location: index.php");
+        exit;
+    }
 } catch (Exception $e) {
-    $_SESSION["message"] = "Nao foi possivel realizar a operacao.<br>{$e->getMessage()}";
+    $_SESSION["message"] = "Não foi possível realizar a operação.";
     $_SESSION["type"] = "danger";
-    header("location:index.php");
+    header("location: index.php");
+    exit;
 }
 ?>
