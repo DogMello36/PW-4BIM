@@ -45,20 +45,35 @@
                     </ul>
                 </li>
 
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
-                        aria-expanded="false">
-                        <i class="fa-solid fa-users"></i> Clientes
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="<?php echo BASEURL; ?>customers">
-                                <i class="fa-solid fa-users"></i> Gerenciar Clientes</a></li>
-                        <?php if (esta_logado()): ?>
+                <?php if (esta_logado()): ?>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <i class="fa-solid fa-users"></i> Clientes
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="<?php echo BASEURL; ?>customers">
+                                    <i class="fa-solid fa-users"></i> Gerenciar Clientes</a></li>
                             <li><a class="dropdown-item" href="<?php echo BASEURL; ?>customers/add.php">
                                     <i class="fa-solid fa-user-plus"></i> Novo Cliente</a></li>
-                        <?php endif; ?>
-                    </ul>
-                </li>
+                        </ul>
+                    </li>
+
+                    <?php if (eh_admin()): ?>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                                aria-expanded="false">
+                                <i class="fa-solid fa-user-shield"></i> Usuários
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="<?php echo BASEURL; ?>usuarios/">
+                                        <i class="fa-solid fa-users-gear"></i> Gerenciar Usuários</a></li>
+                                <li><a class="dropdown-item" href="<?php echo BASEURL; ?>usuarios/add.php">
+                                        <i class="fa-solid fa-user-plus"></i> Novo Usuário</a></li>
+                            </ul>
+                        </li>
+                    <?php endif; ?>
+                <?php endif; ?>
 
             </ul>
                 

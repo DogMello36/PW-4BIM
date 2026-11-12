@@ -1,31 +1,27 @@
 <?php
 include('function.php');
-view($_GET['id']);
-
-
+view($_GET['id'] ?? null);
 include(HEADER_TEMPLATE);
 ?>
 
-<h2>Moto <?php echo $customer['Id']; ?></h2>
+<h2>Moto <?php echo (int) $customer['Id']; ?></h2>
 <hr>
 
-<?php if (!empty($_SESSION['message'])): ?>
-    <div class="alert alert-<?php echo $_SESSION['type']; ?>"><?php echo $_SESSION['message']; ?></div>
-<?php endif; ?>
+<?php exibir_mensagem(); ?>
 
 <div class="detail-panel">
     <div class="detail-grid">
         <div class="detail-item">
             <span class="detail-label">Modelo:</span>
-            <span class="detail-value"><?php echo $customer['Modelo']; ?></span>
+            <span class="detail-value"><?php echo h($customer['Modelo']); ?></span>
         </div>
         <div class="detail-item">
             <span class="detail-label">Marca:</span>
-            <span class="detail-value"><?php echo $customer['Marca']; ?></span>
+            <span class="detail-value"><?php echo h($customer['Marca']); ?></span>
         </div>
         <div class="detail-item">
             <span class="detail-label">Motor:</span>
-            <span class="detail-value"><?php echo $customer['Motor']; ?></span>
+            <span class="detail-value"><?php echo h($customer['Motor']); ?></span>
         </div>
         <div class="detail-item">
             <span class="detail-label">Data de Cadastro:</span>
@@ -35,8 +31,8 @@ include(HEADER_TEMPLATE);
             <span class="detail-label">Imagem:</span>
             <span class="detail-value">
                 <?php if (!empty($customer['Imagem'])): ?>
-                    <img src="<?php echo BASEURL . 'uploads/' . $customer['Imagem']; ?>" alt="Imagem da moto"
-                        class="detail-image">
+                    <img src="<?php echo h(BASEURL . 'uploads/' . rawurlencode(basename($customer['Imagem']))); ?>"
+                        alt="Imagem da moto" class="detail-image">
                 <?php else: ?>
                     &mdash;
                 <?php endif; ?>
@@ -47,11 +43,12 @@ include(HEADER_TEMPLATE);
 
 <div id="actions" class="row">
     <div class="col-md-12">
-        <a href="edit.php?id=<?php echo $customer['Id']; ?>" class="btn btn-secondary"><i
-                class="fa-solid fa-pen-to-square"></i> Editar</a>
+        <?php if (esta_logado()): ?>
+            <a href="edit.php?id=<?php echo (int) $customer['Id']; ?>" class="btn btn-secondary">
+                <i class="fa-solid fa-pen-to-square"></i> Editar</a>
+        <?php endif; ?>
         <a href="index.php" class="btn btn-light"><i class="fa-solid fa-arrow-rotate-left"></i> Voltar</a>
     </div>
-
 </div>
 
 <?php include FOOTER_TEMPLATE; ?>

@@ -6,32 +6,33 @@ include HEADER_TEMPLATE;
 
 <h2>Atualizar Moto</h2>
 
-<form action="edit.php?id=<?= $customer['Id']; ?>" method="post" enctype="multipart/form-data">
-    <!-- area de campos do form -->
+<?php exibir_mensagem(); ?>
+
+<form action="edit.php?id=<?php echo (int) $customer['Id']; ?>" method="post" enctype="multipart/form-data">
     <hr>
     <div class="row">
         <div class="form-group col-md-7">
             <label for="modelo">Modelo</label>
-            <input type="text" class="form-control" id="modelo" name="customer[Modelo]"
-                value="<?php echo $customer['Modelo']; ?>">
+            <input type="text" class="form-control" id="modelo" name="customer[Modelo]" maxlength="50" required
+                value="<?php echo h($customer['Modelo']); ?>">
         </div>
 
         <div class="form-group col-md-3">
             <label for="marca">Marca</label>
-            <input type="text" class="form-control" id="marca" name="customer[Marca]"
-                value="<?php echo $customer['Marca']; ?>">
+            <input type="text" class="form-control" id="marca" name="customer[Marca]" maxlength="30" required
+                value="<?php echo h($customer['Marca']); ?>">
         </div>
 
         <div class="form-group col-md-2">
             <label for="motor">Motor</label>
-            <input type="text" class="form-control" id="motor" name="customer[Motor]"
-                value="<?php echo $customer['Motor']; ?>">
+            <input type="text" class="form-control" id="motor" name="customer[Motor]" maxlength="20" required
+                value="<?php echo h($customer['Motor']); ?>">
         </div>
 
         <div class="form-group col-md-2">
             <label for="created">Data de Cadastro</label>
             <input type="date" class="form-control" id="created" disabled
-                value="<?php echo formatData($customer['DataCad'], "Y-m-d"); ?>">
+                value="<?php echo h(formatData($customer['DataCad'], "Y-m-d")); ?>">
         </div>
     </div>
 
@@ -44,7 +45,8 @@ include HEADER_TEMPLATE;
 
             <?php if (!empty($customer['Imagem'])): ?>
                 <div class="rl-current-image">
-                    <img src="<?php echo BASEURL . 'uploads/' . $customer['Imagem']; ?>" alt="Imagem atual">
+                    <img src="<?php echo h(BASEURL . 'uploads/' . rawurlencode(basename($customer['Imagem']))); ?>"
+                        alt="Imagem atual">
                     <span>Imagem atual</span>
                 </div>
             <?php endif; ?>

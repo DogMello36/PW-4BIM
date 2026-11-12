@@ -172,6 +172,7 @@ function view($id = null)
  */
 function add()
 {
+	global $customer;
 	exigir_login();
 
 	if (empty($_POST['customer'])) {
@@ -179,6 +180,8 @@ function add()
 	}
 
 	$dados = dadosMoto($_POST['customer']);
+	$customer = $dados; // mantém o que foi digitado se houver erro
+
 	$erros = validarMoto($dados);
 	if ($erros) {
 		definir_erro($erros);

@@ -6,31 +6,34 @@ include HEADER_TEMPLATE;
 
 <h2>Nova Moto</h2>
 
+<?php exibir_mensagem(); ?>
+
 <form action="add.php" method="post" enctype="multipart/form-data">
-    <!-- area de campos do form -->
     <hr>
     <div class="row">
         <div class="form-group col-md-7">
             <label for="modelo">Modelo</label>
-            <input type="text" class="form-control" id="modelo" name="customer[Modelo]">
+            <input type="text" class="form-control" id="modelo" name="customer[Modelo]" maxlength="50" required
+                value="<?php echo h($customer['Modelo'] ?? ''); ?>">
         </div>
 
         <div class="form-group col-md-3">
             <label for="marca">Marca</label>
-            <input type="text" class="form-control" id="marca" name="customer[Marca]">
+            <input type="text" class="form-control" id="marca" name="customer[Marca]" maxlength="30" required
+                value="<?php echo h($customer['Marca'] ?? ''); ?>">
         </div>
 
         <div class="form-group col-md-2">
             <label for="motor">Motor</label>
-            <input type="text" class="form-control" id="motor" name="customer[Motor]">
+            <input type="text" class="form-control" id="motor" name="customer[Motor]" maxlength="20" required
+                value="<?php echo h($customer['Motor'] ?? ''); ?>">
         </div>
-    
 
         <div class="form-group col-md-2">
             <label for="created">Data de Cadastro</label>
             <input type="date" class="form-control" id="created" name="customer[DataCad]" disabled>
         </div>
-   
+
         <div class="form-group col-md-4">
             <label for="imagem">Imagem</label>
             <input type="file" class="form-control" id="imagem" name="customer[imagem]"

@@ -32,7 +32,7 @@ try {
 
 		<?php if (esta_logado()): ?>
 			<div class="col-xs-6 col-sm-3 col-md-2">
-				<a href="motos/add.php" class="btn btn-secondary">
+				<a href="<?php echo BASEURL; ?>motos/add.php" class="btn btn-secondary">
 					<div class="row">
 						<div class="col-xs-12 text-center">
 							<i class="fa-solid fa-bicycle i"></i>
@@ -46,7 +46,7 @@ try {
 		<?php endif; ?>
 
 		<div class="col-xs-6 col-sm-3 col-md-2">
-			<a href="motos" class="btn btn-light">
+			<a href="<?php echo BASEURL; ?>motos/" class="btn btn-light">
 				<div class="row">
 					<div class="col-xs-12 text-center">
 						<i class="fa-solid fa-motorcycle i"></i>
@@ -58,9 +58,9 @@ try {
 			</a>
 		</div>
 
-		<?php if (esta_logado()): ?>
+				<?php if (esta_logado()): ?>
 			<div class="col-xs-6 col-sm-3 col-md-2">
-				<a href="customers/add.php" class="btn btn-secondary">
+				<a href="<?php echo BASEURL; ?>customers/add.php" class="btn btn-secondary">
 					<div class="row">
 						<div class="col-xs-12 text-center">
 							<i class="fa-solid fa-user-plus i"></i>
@@ -71,20 +71,48 @@ try {
 					</div>
 				</a>
 			</div>
-		<?php endif; ?>
 
-		<div class="col-xs-6 col-sm-3 col-md-2">
-			<a href="customers" class="btn btn-light">
-				<div class="row">
-					<div class="col-xs-12 text-center">
-						<i class="fa-solid fa-users i"></i>
+			<div class="col-xs-6 col-sm-3 col-md-2">
+				<a href="<?php echo BASEURL; ?>customers/" class="btn btn-light">
+					<div class="row">
+						<div class="col-xs-12 text-center">
+							<i class="fa-solid fa-users i"></i>
+						</div>
+						<div class="col-xs-12 text-center">
+							<p>Clientes</p>
+						</div>
 					</div>
-					<div class="col-xs-12 text-center">
-						<p>Clientes</p>
+				</a>
+			</div>
+
+					<?php if (eh_admin()): ?>
+			<div class="col-xs-6 col-sm-3 col-md-2">
+				<a href="<?php echo BASEURL; ?>usuarios/add.php" class="btn btn-secondary">
+					<div class="row">
+						<div class="col-xs-12 text-center">
+							<i class="fa-solid fa-user-plus i"></i>
+						</div>
+						<div class="col-xs-12 text-center">
+							<p>Novo Usuário</p>
+						</div>
 					</div>
-				</div>
-			</a>
-		</div>
+				</a>
+			</div>
+
+			<div class="col-xs-6 col-sm-3 col-md-2">
+				<a href="<?php echo BASEURL; ?>usuarios/" class="btn btn-light">
+					<div class="row">
+						<div class="col-xs-12 text-center">
+							<i class="fa-solid fa-user-shield i"></i>
+						</div>
+						<div class="col-xs-12 text-center">
+							<p>Usuários</p>
+						</div>
+					</div>
+				</a>
+			</div>
+		<?php endif; ?>
+		<?php endif; ?>
 
 	</div>
 
