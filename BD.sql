@@ -45,7 +45,9 @@ INSERT INTO Permi (Nome_Permi, Descricao_Permi) VALUES
   ('Admin', 'Acesso total, incluindo usuários'),
   ('Comum', 'CRUD de clientes e motos');
 
--- Troque COLE_O_HASH_AQUI pelo hash gerado (veja abaixo)
 INSERT INTO Usuarios (Id_Permi, Login_usu, Senha_usu) VALUES
-  (1, 'admin',   'COLE_O_HASH_AQUI'),
-  (2, 'usuario', 'COLE_O_HASH_AQUI');
+  (1, 'admin',   '1234'),
+  (2, 'usuario', '123');
+
+UPDATE Usuarios SET Senha_usu = '$2y$10$u8bMgvzFnp5PhNNH7BTlvuX2eQI9pOv7ePThg3IlLPuPh4KLLCDrq', Ativo_usu = 1 WHERE Login_usu = 'admin';
+UPDATE Usuarios SET Senha_usu = '$2y$10$ldGuxBa1dxjOa8959QNoROa9KRRwj1LdCtd1qYLznCacJgMacsMC6', Ativo_usu = 1 WHERE Login_usu = 'usuario';

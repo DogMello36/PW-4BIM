@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Redline Motors | Painel de Motos</title>
+    <title>Garage Motors</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="keywords" content="">

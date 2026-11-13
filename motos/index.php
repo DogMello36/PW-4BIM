@@ -53,11 +53,11 @@
                             <i class="fa fa-eye"></i> Visualizar</a>
 
                         <?php if (esta_logado()): ?>
-                            <a href="edit.php?id=<?php echo (int) $customer['Id']; ?>" class="btn btn-sm btn-secondary">
+                            <a href="edit.php?id=<?php echo (int) $customer['Id']; ?>"  class="btn btn-sm btn-secondary">
                                 <i class="fa fa-pencil"></i> Editar</a>
                             <a href="#" class="btn btn-sm btn-dark mt-2" data-bs-toggle="modal"
-                                data-bs-target="#delete-modal" data-customer="<?php echo (int) $customer['Id']; ?>">
-                                <i class="fa fa-trash"></i> Excluir
+                                data-bs-target="#delete-modal" data-customer="<?php echo (int) $customer['Id']; ?>" data-rotulo="Moto">
+                                <i class="fa fa-trash" ></i> Excluir
                             </a>
                         <?php endif; ?>
                     </td>
