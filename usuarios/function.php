@@ -8,10 +8,10 @@ include_once('../inc/upload.php');
 
 const USUARIOS_TABELA = 'Usuarios';
 const USUARIOS_PK = 'Id_Usu';
+const PERFIS_USUARIO = ['Funcionario', 'Admin'];
 
 $usuarios = null;
 $usuario = null;
-$permissoes = [];
 
 function definir_erro($mensagens)
 {
@@ -19,30 +19,12 @@ function definir_erro($mensagens)
 	$_SESSION['type'] = "danger";
 }
 
-/** Carrega os perfis (Admin, Comum...) da tabela Permi */
-function carregarPermissoes()
-{
-	global $permissoes;
-	$permissoes = find_all('Permi', 'Nome_Permi') ?: [];
-}
-
-function nomePermissao($idPermi)
-{
-	global $permissoes;
-	foreach ($permissoes as $p) {
-		if ((int) $p['Id_Permi'] === (int) $idPermi) {
-			return $p['Nome_Permi'];
-		}
-	}
-	return '—';
-}
-
 /** Pega só os campos permitidos do formulário */
 function dadosUsuario($origem)
 {
 	return [
 		'Login_usu' => trim($origem['Login_usu'] ?? ''),
-		'Id_Permi'  => (int) ($origem['Id_Permi'] ?? 0),
+		'Perfil_Usu' => trim($origem['Perfil_Usu'] ?? ''),
 		'Ativo_usu' => !empty($origem['Ativo_usu']) ? 1 : 0,
 		'Senha'     => (string) ($origem['Senha'] ?? ''),
 	];
@@ -77,7 +59,7 @@ function validarUsuario($d, $idAtual = 0)
 		}
 	}
 
-	if ($d['Id_Permi'] <= 0 || !find('Permi', $d['Id_Permi'], 'Id_Permi')) {
+	if (!in_array($d['Perfil_Usu'], PERFIS_USUARIO, true)) {
 		$erros[] = "Selecione um perfil válido.";
 	}
 
@@ -89,7 +71,6 @@ function index()
 {
 	global $usuarios;
 	exigir_admin();
-	carregarPermissoes();
 	$usuarios = find_all(USUARIOS_TABELA, 'Login_usu');
 }
 
@@ -98,7 +79,6 @@ function view($id = null)
 {
 	global $usuario;
 	exigir_admin();
-	carregarPermissoes();
 
 	$id = (int) $id;
 	$usuario = $id > 0 ? find(USUARIOS_TABELA, $id, USUARIOS_PK) : null;
@@ -116,7 +96,6 @@ function add()
 {
 	global $usuario;
 	exigir_admin();
-	carregarPermissoes();
 
 	if (empty($_POST['usuario'])) {
 		return;
@@ -137,7 +116,7 @@ function add()
 	}
 
 	$registro = [
-		'Id_Permi'  => $dados['Id_Permi'],
+		'Perfil_Usu' => $dados['Perfil_Usu'],
 		'Login_usu' => $dados['Login_usu'],
 		'Senha_usu' => password_hash($dados['Senha'], PASSWORD_DEFAULT),
 		'Ativo_usu' => $dados['Ativo_usu'],
@@ -159,7 +138,6 @@ function edit()
 {
 	global $usuario;
 	exigir_admin();
-	carregarPermissoes();
 
 	$id = (int) ($_GET['id'] ?? 0);
 	if ($id <= 0) {
@@ -182,7 +160,7 @@ function edit()
 
 		// ninguém altera o próprio perfil nem se desativa (evita ficar sem acesso)
 		if ($ehEu) {
-			$dados['Id_Permi'] = (int) $atual['Id_Permi'];
+			$dados['Perfil_Usu'] = $atual['Perfil_Usu'];
 			$dados['Ativo_usu'] = 1;
 		}
 
@@ -200,7 +178,7 @@ function edit()
 		}
 
 		$registro = [
-			'Id_Permi'  => $dados['Id_Permi'],
+			'Perfil_Usu' => $dados['Perfil_Usu'],
 			'Login_usu' => $dados['Login_usu'],
 			'Ativo_usu' => $dados['Ativo_usu'],
 		];

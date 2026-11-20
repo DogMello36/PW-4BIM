@@ -9,7 +9,7 @@ function esta_logado()
 	return !empty($_SESSION['usuario']);
 }
 
-/** Admin = Nome_Permi da tabela Permi igual a "Admin" */
+/** O perfil Admin tem acesso ao gerenciamento de usuários. */
 function eh_admin()
 {
 	return esta_logado() && ($_SESSION['usuario']['perfil'] ?? '') === 'Admin';

@@ -26,12 +26,11 @@ include HEADER_TEMPLATE;
 
         <div class="form-group col-md-3">
             <label for="perfil">Perfil</label>
-            <select class="form-select" id="perfil" name="usuario[Id_Permi]" required>
-                <option value="">Selecione...</option>
-                <?php foreach ($permissoes as $p): ?>
-                    <option value="<?php echo (int) $p['Id_Permi']; ?>"
-                        <?php echo ((int) ($usuario['Id_Permi'] ?? 0) === (int) $p['Id_Permi']) ? 'selected' : ''; ?>>
-                        <?php echo h($p['Nome_Permi']); ?>
+            <select class="form-select" id="perfil" name="usuario[Perfil_Usu]" required>
+                <?php foreach (PERFIS_USUARIO as $perfil): ?>
+                    <option value="<?php echo h($perfil); ?>"
+                        <?php echo (($usuario['Perfil_Usu'] ?? 'Funcionario') === $perfil) ? 'selected' : ''; ?>>
+                        <?php echo $perfil === 'Admin' ? 'Administrador' : 'Funcionário'; ?>
                     </option>
                 <?php endforeach; ?>
             </select>

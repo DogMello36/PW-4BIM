@@ -36,7 +36,7 @@
             <?php foreach ($usuarios as $u): ?>
                 <?php
                     $foto = foto_usuario_url($u['Foto_usu'] ?? null);
-                    $perfil = nomePermissao($u['Id_Permi']);
+                    $perfil = $u['Perfil_Usu'];
                     $ehEu = ((int) $u['Id_Usu'] === (int) $_SESSION['usuario']['id']);
                 ?>
                 <tr>
@@ -51,7 +51,7 @@
                     <td><?php echo h($u['Login_usu']); ?><?php echo $ehEu ? ' <small>(você)</small>' : ''; ?></td>
                     <td>
                         <span class="badge <?php echo $perfil === 'Admin' ? 'bg-warning text-dark' : 'bg-secondary'; ?>">
-                            <?php echo h($perfil); ?>
+                            <?php echo $perfil === 'Admin' ? 'Administrador' : 'Funcionário'; ?>
                         </span>
                     </td>
                     <td>

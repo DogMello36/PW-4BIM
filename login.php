@@ -31,10 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 			$db = open_database();
 
 			$stmt = $db->prepare(
-				"SELECT u.Id_Usu, u.Login_usu, u.Senha_usu, u.Ativo_usu, u.Foto_usu, p.Nome_Permi
-				FROM Usuarios u
-				JOIN Permi p ON p.Id_Permi = u.Id_Permi
-				WHERE u.Login_usu = ?
+				"SELECT Id_Usu, Login_usu, Senha_usu, Ativo_usu, Foto_usu, Perfil_Usu
+				FROM Usuarios
+				WHERE Login_usu = ?
 				LIMIT 1"
 			);
 			$stmt->bind_param('s', $loginDigitado);
@@ -50,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 				$_SESSION['usuario'] = [
 					'id'     => (int) $idUsu,
 					'login'  => $loginUsu,
-					'perfil' => $perfil, // "Admin" ou "Comum"
+					'perfil' => $perfil, // "Admin" ou "Funcionario"
 					'foto'   => $foto,   // pode ser null
 				];
 				$_SESSION['csrf'] = bin2hex(random_bytes(32));
@@ -82,12 +81,12 @@ if (!empty($_SESSION['message'])) {
 
 <head>
 	<meta charset="utf-8">
-	<title>Entrar | Garage Motors</title>
+	<title>Entrar | Gestão de Funcionários</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 	<link rel="stylesheet" href="<?php echo BASEURL; ?>css/bootstrap.min.css">
 	<link rel="stylesheet" href="<?php echo BASEURL; ?>css/all.min.css">
@@ -99,7 +98,7 @@ if (!empty($_SESSION['message'])) {
 	<div class="login-box">
 
 		<div class="login-brand">
-			<i class="fa-solid fa-motorcycle"></i><span class="login-tag">Garage</span> Motors
+			<span class="brand-mark"><i class="fa-solid fa-users"></i></span> Gestão de Funcionários
 		</div>
 
 		<div class="login-card">
