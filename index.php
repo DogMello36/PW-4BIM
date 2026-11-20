@@ -18,117 +18,50 @@ include HEADER_TEMPLATE;
 $erro = null;
 try {
 	$db = open_database();
+	close_database($db);
+	$funcionarios = find_all('Funcionarios');
+	$clientes = find_all('Cliente');
 } catch (Exception $e) {
 	$erro = $e->getMessage();
 }
 ?>
 
-<h1>Dashboard</h1>
-<hr>
-
 <?php if (!$erro): ?>
 
-	<div class="row">
-
-		<?php if (esta_logado()): ?>
-			<div class="col-xs-6 col-sm-3 col-md-2">
-				<a href="<?php echo BASEURL; ?>motos/add.php" class="btn btn-secondary">
-					<div class="row">
-						<div class="col-xs-12 text-center">
-							<i class="fa-solid fa-bicycle i"></i>
-						</div>
-						<div class="col-xs-12 text-center">
-							<p>Nova Moto</p>
-						</div>
-					</div>
+	<section class="hero-panel mb-4">
+		<div>
+			<p class="eyebrow">PAINEL DE GESTÃO</p>
+			<h1>Uma equipe forte começa com uma boa gestão.</h1>
+			<p class="hero-copy mb-4">Consulte e mantenha os dados dos funcionários em um só lugar.</p>
+			<a href="<?php echo BASEURL; ?>funcionarios/" class="btn btn-light">
+				<i class="fa-solid fa-users"></i> Ver funcionários
+			</a>
+			<?php if (esta_logado()): ?>
+				<a href="<?php echo BASEURL; ?>funcionarios/add.php" class="btn btn-primary ms-2">
+					<i class="fa-solid fa-user-plus"></i> Novo funcionário
 				</a>
-			</div>
-		<?php endif; ?>
+			<?php endif; ?>
+		</div>
+		<span class="hero-symbol" aria-hidden="true"><i class="fa-solid fa-people-group"></i></span>
+	</section>
 
-		<div class="col-xs-6 col-sm-3 col-md-2">
-			<a href="<?php echo BASEURL; ?>motos/" class="btn btn-light">
-				<div class="row">
-					<div class="col-xs-12 text-center">
-						<i class="fa-solid fa-motorcycle i"></i>
-					</div>
-					<div class="col-xs-12 text-center">
-						<p>Motos</p>
-					</div>
-				</div>
+	<div class="row g-3">
+		<div class="col-md-6">
+			<a href="<?php echo BASEURL; ?>funcionarios/" class="metric-card">
+				<span class="metric-icon"><i class="fa-solid fa-user-tie"></i></span>
+				<span><span class="metric-label">Funcionários cadastrados</span>
+					<strong class="metric-number"><?php echo is_array($funcionarios) ? count($funcionarios) : 0; ?></strong></span>
+				<span class="metric-arrow"><i class="fa-solid fa-arrow-right"></i></span>
 			</a>
 		</div>
-
-						<?php if (esta_logado()): ?>
-			<div class="col-xs-6 col-sm-3 col-md-2">
-				<a href="<?php echo BASEURL; ?>customers/add.php" class="btn btn-secondary">
-					<div class="row">
-						<div class="col-xs-12 text-center">
-							<i class="fa-solid fa-user-plus i"></i>
-						</div>
-						<div class="col-xs-12 text-center">
-							<p>Novo Cliente</p>
-						</div>
-					</div>
-				</a>
-			</div>
-		<?php endif; ?>
-
-				<?php if (esta_logado()): ?>
-			<div class="col-xs-6 col-sm-3 col-md-2">
-				<a href="<?php echo BASEURL; ?>customers/add.php" class="btn btn-secondary">
-					<div class="row">
-						<div class="col-xs-12 text-center">
-							<i class="fa-solid fa-user-plus i"></i>
-						</div>
-						<div class="col-xs-12 text-center">
-							<p>Novo Cliente</p>
-						</div>
-					</div>
-				</a>
-			</div>
-		<?php endif; ?>
-
-		<div class="col-xs-6 col-sm-3 col-md-2">
-			<a href="<?php echo BASEURL; ?>customers/" class="btn btn-light">
-				<div class="row">
-					<div class="col-xs-12 text-center">
-						<i class="fa-solid fa-users i"></i>
-					</div>
-					<div class="col-xs-12 text-center">
-						<p>Clientes</p>
-					</div>
-				</div>
+		<div class="col-md-6">
+			<a href="<?php echo BASEURL; ?>customers/" class="metric-card">
+				<span class="metric-icon metric-icon-alt"><i class="fa-solid fa-users"></i></span>
+				<span><span class="metric-label">Clientes cadastrados</span>
+					<strong class="metric-number"><?php echo is_array($clientes) ? count($clientes) : 0; ?></strong></span>
+				<span class="metric-arrow"><i class="fa-solid fa-arrow-right"></i></span>
 			</a>
 		</div>
-
-		<?php if (eh_admin()): ?>
-			<div class="col-xs-6 col-sm-3 col-md-2">
-				<a href="<?php echo BASEURL; ?>usuarios/add.php" class="btn btn-secondary">
-					<div class="row">
-						<div class="col-xs-12 text-center">
-							<i class="fa-solid fa-user-plus i"></i>
-						</div>
-						<div class="col-xs-12 text-center">
-							<p>Novo Usuário</p>
-						</div>
-					</div>
-				</a>
-			</div>
-
-			<div class="col-xs-6 col-sm-3 col-md-2">
-				<a href="<?php echo BASEURL; ?>usuarios/" class="btn btn-light">
-					<div class="row">
-						<div class="col-xs-12 text-center">
-							<i class="fa-solid fa-user-shield i"></i>
-						</div>
-						<div class="col-xs-12 text-center">
-							<p>Usuários</p>
-						</div>
-					</div>
-				</a>
-			</div>
-		<?php endif; ?>
-
 	</div>
 
 <?php else: ?>

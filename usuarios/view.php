@@ -4,7 +4,7 @@ view($_GET['id'] ?? null);
 include(HEADER_TEMPLATE);
 
 $foto = foto_usuario_url($usuario['Foto_usu'] ?? null);
-$perfil = nomePermissao($usuario['Id_Permi']);
+$perfil = $usuario['Perfil_Usu'] === 'Admin' ? 'Administrador' : 'Funcionário';
 ?>
 
 <h2>Usuário #<?php echo (int) $usuario['Id_Usu']; ?></h2>
