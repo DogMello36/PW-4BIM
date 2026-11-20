@@ -58,6 +58,21 @@ try {
 			</a>
 		</div>
 
+						<?php if (esta_logado()): ?>
+			<div class="col-xs-6 col-sm-3 col-md-2">
+				<a href="<?php echo BASEURL; ?>customers/add.php" class="btn btn-secondary">
+					<div class="row">
+						<div class="col-xs-12 text-center">
+							<i class="fa-solid fa-user-plus i"></i>
+						</div>
+						<div class="col-xs-12 text-center">
+							<p>Novo Cliente</p>
+						</div>
+					</div>
+				</a>
+			</div>
+		<?php endif; ?>
+
 				<?php if (esta_logado()): ?>
 			<div class="col-xs-6 col-sm-3 col-md-2">
 				<a href="<?php echo BASEURL; ?>customers/add.php" class="btn btn-secondary">
@@ -71,21 +86,22 @@ try {
 					</div>
 				</a>
 			</div>
+		<?php endif; ?>
 
-			<div class="col-xs-6 col-sm-3 col-md-2">
-				<a href="<?php echo BASEURL; ?>customers/" class="btn btn-light">
-					<div class="row">
-						<div class="col-xs-12 text-center">
-							<i class="fa-solid fa-users i"></i>
-						</div>
-						<div class="col-xs-12 text-center">
-							<p>Clientes</p>
-						</div>
+		<div class="col-xs-6 col-sm-3 col-md-2">
+			<a href="<?php echo BASEURL; ?>customers/" class="btn btn-light">
+				<div class="row">
+					<div class="col-xs-12 text-center">
+						<i class="fa-solid fa-users i"></i>
 					</div>
-				</a>
-			</div>
+					<div class="col-xs-12 text-center">
+						<p>Clientes</p>
+					</div>
+				</div>
+			</a>
+		</div>
 
-					<?php if (eh_admin()): ?>
+		<?php if (eh_admin()): ?>
 			<div class="col-xs-6 col-sm-3 col-md-2">
 				<a href="<?php echo BASEURL; ?>usuarios/add.php" class="btn btn-secondary">
 					<div class="row">
@@ -111,7 +127,6 @@ try {
 					</div>
 				</a>
 			</div>
-		<?php endif; ?>
 		<?php endif; ?>
 
 	</div>
